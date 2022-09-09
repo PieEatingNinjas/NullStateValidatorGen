@@ -86,18 +86,19 @@ internal class SyntaxReceiver : ISyntaxContextReceiver
 
         foreach (var item in nonNullMembers)
         {
-            validations.Append($"if({item} is null) throw new Exception();");
+            validations.AppendLine($"if({item} is null) throw new NullStateViolationException(\"{item}\");");
         }
 
 
         var @class =
 $@"// Auto-generated code for {classSymbol.Name}
+using NullStateValidator;
 namespace {classSymbol.ContainingNamespace.ToDisplayString()};
 public partial class {classSymbol.Name}
 {{
     partial void ValidateInternal ()
     {{
-        {validations};
+        {validations}
     }}
 }}";
         Checks.Add(classSymbol.Name, @class);

@@ -1,3 +1,5 @@
+using NullStateValidator;
+
 namespace GeneratorTests
 {
     public class ValidationTests
@@ -22,7 +24,8 @@ namespace GeneratorTests
 
             validPerson.Validate();
 
-            Assert.Throws<Exception>(() => invalidPerson.Validate());
+            var ex = Assert.Throws<NullStateViolationException>(() => invalidPerson.Validate());
+            Assert.Equal($"Member '{nameof(PersonDto.FirstName)}' should not be null!", ex.Message);
         }
     }
 }
