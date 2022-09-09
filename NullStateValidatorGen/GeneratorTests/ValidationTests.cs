@@ -22,11 +22,11 @@ namespace GeneratorTests
             };
 
 
-            //validPerson.Validate();
-            NullStateValidator.GetFor<PersonDto>()!.Validate(invalidPerson);
+            validPerson.Validate();
+          //  NullStateValidator.GetFor<PersonDto>()!.Validate(invalidPerson);
 
-            //var ex = Assert.Throws<NullStateViolationException>(() => invalidPerson.Validate());
-           // Assert.Equal($"Member '{nameof(PersonDto.FirstName)}' should not be null!", ex.Message);
+            var ex = Assert.Throws<NullStateViolationException>(() => invalidPerson.Validate());
+            Assert.Equal($"Member '{nameof(PersonDto.FirstName)}' should not be null!", ex.Message);
         }
     }
 }

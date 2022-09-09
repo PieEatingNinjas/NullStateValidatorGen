@@ -1,5 +1,7 @@
 ﻿using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using NullStateValidator;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -48,38 +50,44 @@ internal class SyntaxReceiver : ISyntaxContextReceiver
         {
             var attributes = classDeclarationSyntax.AttributeLists;
 
-            var classSymbol = context.SemanticModel.GetDeclaredSymbol(classDeclarationSyntax);
 
-            if (classSymbol.Name.EndsWith("Dto"))
+            var att1 = attributes.FirstOrDefault();
+            if(att1 is not null)
             {
-                List<string> nonNullMembers = new List<string>();
-                foreach (var item in classDeclarationSyntax.Members)
+                // if(attributes.SingleOrDefault(a => a.d))
+                if (att1.Attributes.First().Name.ToFullString().Contains("NullStateValidator"))
                 {
-                  //  var atts = classSymbol.GetAttributes();
-                    var y = context.SemanticModel.GetDeclaredSymbol(item);
+                    var classSymbol = context.SemanticModel.GetDeclaredSymbol(classDeclarationSyntax);
 
-                    if (y is IPropertySymbol ps)
+                    List<string> nonNullMembers = new List<string>();
+                    foreach (var item in classDeclarationSyntax.Members)
                     {
-                        if (ps.Type.IsValueType)
-                            continue;
+                        //  var atts = classSymbol.GetAttributes();
+                        var y = context.SemanticModel.GetDeclaredSymbol(item);
 
-                        if (ps.NullableAnnotation == NullableAnnotation.Annotated)
+                        if (y is IPropertySymbol ps)
                         {
-                            //Nullable
-                            System.Diagnostics.Debug.WriteLine($"{ps.ToDisplayString()} is nullable");
-                        }
-                        else if (ps.NullableAnnotation == NullableAnnotation.NotAnnotated)
-                        {
-                            //Not nullable
-                            System.Diagnostics.Debug.WriteLine($"{ps.ToDisplayString()} is NOT nullable");
-                            nonNullMembers.Add(ps.Name);
+                            if (ps.Type.IsValueType)
+                                continue;
+
+                            if (ps.NullableAnnotation == NullableAnnotation.Annotated)
+                            {
+                                //Nullable
+                                System.Diagnostics.Debug.WriteLine($"{ps.ToDisplayString()} is nullable");
+                            }
+                            else if (ps.NullableAnnotation == NullableAnnotation.NotAnnotated)
+                            {
+                                //Not nullable
+                                System.Diagnostics.Debug.WriteLine($"{ps.ToDisplayString()} is NOT nullable");
+                                nonNullMembers.Add(ps.Name);
+                            }
                         }
                     }
-                }
 
-                if (nonNullMembers.Any())
-                {
-                    GenerateChecks(context, classSymbol, nonNullMembers);
+                    if (nonNullMembers.Any())
+                    {
+                        GenerateChecks(context, classSymbol, nonNullMembers);
+                    }
                 }
             }
         }
