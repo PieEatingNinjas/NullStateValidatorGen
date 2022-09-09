@@ -23,8 +23,6 @@ public class NSVGenerator : ISourceGenerator
                 context.AddSource(
                     $"{item.Key}.g.cs", item.Value);
             }
-
-
         }
     }
 
@@ -48,6 +46,8 @@ internal class SyntaxReceiver : ISyntaxContextReceiver
     {
         if (context.Node is ClassDeclarationSyntax classDeclarationSyntax)
         {
+            var attributes = classDeclarationSyntax.AttributeLists;
+
             var classSymbol = context.SemanticModel.GetDeclaredSymbol(classDeclarationSyntax);
 
             if (classSymbol.Name.EndsWith("Dto"))
@@ -55,7 +55,7 @@ internal class SyntaxReceiver : ISyntaxContextReceiver
                 List<string> nonNullMembers = new List<string>();
                 foreach (var item in classDeclarationSyntax.Members)
                 {
-                    var atts = classSymbol.GetAttributes();
+                  //  var atts = classSymbol.GetAttributes();
                     var y = context.SemanticModel.GetDeclaredSymbol(item);
 
                     if (y is IPropertySymbol ps)
