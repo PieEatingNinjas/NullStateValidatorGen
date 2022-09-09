@@ -1,9 +1,11 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Xml.Linq;
 
 namespace NullStateValidatorGen;
 
@@ -21,17 +23,19 @@ public class NSVGenerator : ISourceGenerator
                 context.AddSource(
                     $"{item.Key}.g.cs", item.Value);
             }
+
+
         }
     }
 
     public void Initialize(GeneratorInitializationContext context)
     {
-        //#if DEBUG
-        //            if (!Debugger.IsAttached)
-        //            {
-        //                Debugger.Launch();
-        //            }
-        //#endif 
+#if DEBUG
+        if (!Debugger.IsAttached)
+        {
+            Debugger.Launch();
+        }
+#endif
         context.RegisterForSyntaxNotifications(() => new SyntaxReceiver());
         Debug.WriteLine("Initalize code generator");
     }
@@ -51,6 +55,7 @@ internal class SyntaxReceiver : ISyntaxContextReceiver
                 List<string> nonNullMembers = new List<string>();
                 foreach (var item in classDeclarationSyntax.Members)
                 {
+                    var atts = classSymbol.GetAttributes();
                     var y = context.SemanticModel.GetDeclaredSymbol(item);
 
                     if (y is IPropertySymbol ps)
