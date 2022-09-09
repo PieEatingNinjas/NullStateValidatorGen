@@ -2,6 +2,7 @@
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using NullStateValidator;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -20,11 +21,63 @@ public class NSVGenerator : ISourceGenerator
 
         if (syntaxReceiver != null && syntaxReceiver.Checks.Any())
         {
+            var factoryBuilder = new StringBuilder();
+
             foreach (var item in syntaxReceiver.Checks)
             {
+                var validations = new StringBuilder();
+
+                foreach (var member in item.Value)
+                {
+                    validations.AppendLine($"if(instance.{member} is null) throw new NullStateViolationException(\"{member}\");");
+                }
+
+                var dtoValidator =
+@$"
+using NullStateValidator;
+using GeneratorTests;
+namespace NullStateValidatorGen;
+public class {item.Key.Name}NullStateValidator : INullStateValidator<{item.Key.Name}>
+{{
+    public void Validate({item.Key.Name} instance)
+    {{
+        {validations}
+    }}
+}}";
                 context.AddSource(
-                    $"{item.Key}.g.cs", item.Value);
+                    $"{item.Key.Name}NullStateValidator.g.cs", dtoValidator);
+
+
+                factoryBuilder.AppendLine(
+$"NullStateValidators.Add(\"{item.Key.Name}\", new {item.Key.Name}NullStateValidator()));");
+
             }
+
+
+            var factory =
+@$"
+using NullStateValidatorGen;
+using GeneratorTests;
+namespace NullStateValidator;
+public partial class NullStateValidatorFactory
+{{
+    partial void Init()
+    {{
+        {factoryBuilder}
+    }}
+}}
+";
+
+            context.AddSource(
+                   $"NullStateValidatorFactory.g.cs", factory);
+
+
+
+            //foreach (var item in syntaxReceiver.Checks)
+            //{
+            //    context.AddSource(
+            //        $"{item.Key}.g.cs", item.Value);
+            //}
         }
     }
 
@@ -43,18 +96,16 @@ public class NSVGenerator : ISourceGenerator
 
 internal class SyntaxReceiver : ISyntaxContextReceiver
 {
-    public Dictionary<string, string> Checks { get; set; } = new Dictionary<string, string>();
+    public Dictionary<ISymbol, List<string>> Checks { get; set; } = new Dictionary<ISymbol, List<string>>();
     public void OnVisitSyntaxNode(GeneratorSyntaxContext context)
     {
         if (context.Node is ClassDeclarationSyntax classDeclarationSyntax)
         {
             var attributes = classDeclarationSyntax.AttributeLists;
 
-
-            var att1 = attributes.FirstOrDefault();
-            if(att1 is not null)
+            var att1 = attributes.FirstOrDefault(); //Meh...
+            if (att1 is not null)
             {
-                // if(attributes.SingleOrDefault(a => a.d))
                 if (att1.Attributes.First().Name.ToFullString().Contains("NullStateValidator"))
                 {
                     var classSymbol = context.SemanticModel.GetDeclaredSymbol(classDeclarationSyntax);
@@ -62,7 +113,6 @@ internal class SyntaxReceiver : ISyntaxContextReceiver
                     List<string> nonNullMembers = new List<string>();
                     foreach (var item in classDeclarationSyntax.Members)
                     {
-                        //  var atts = classSymbol.GetAttributes();
                         var y = context.SemanticModel.GetDeclaredSymbol(item);
 
                         if (y is IPropertySymbol ps)
@@ -86,34 +136,35 @@ internal class SyntaxReceiver : ISyntaxContextReceiver
 
                     if (nonNullMembers.Any())
                     {
-                        GenerateChecks(context, classSymbol, nonNullMembers);
+                        Checks.Add(classSymbol, nonNullMembers);
                     }
                 }
             }
         }
     }
-
-    private void GenerateChecks(GeneratorSyntaxContext context, ISymbol classSymbol, List<string> nonNullMembers)
-    {
-        var validations = new StringBuilder();
-
-        foreach (var item in nonNullMembers)
-        {
-            validations.AppendLine($"if({item} is null) throw new NullStateViolationException(\"{item}\");");
-        }
-
-
-        var @class =
-$@"// Auto-generated code for {classSymbol.Name}
-using NullStateValidator;
-namespace {classSymbol.ContainingNamespace.ToDisplayString()};
-public partial class {classSymbol.Name}
-{{
-    partial void ValidateInternal ()
-    {{
-        {validations}
-    }}
-}}";
-        Checks.Add(classSymbol.Name, @class);
-    }
 }
+
+//    private void GenerateChecks(GeneratorSyntaxContext context, ISymbol classSymbol, List<string> nonNullMembers)
+//    {
+//        var validations = new StringBuilder();
+
+//        foreach (var item in nonNullMembers)
+//        {
+//            validations.AppendLine($"if({item} is null) throw new NullStateViolationException(\"{item}\");");
+//        }
+
+
+//        var @class =
+//$@"// Auto-generated code for {classSymbol.Name}
+//using NullStateValidator;
+//namespace {classSymbol.ContainingNamespace.ToDisplayString()};
+//public partial class {classSymbol.Name}
+//{{
+//    partial void ValidateInternal ()
+//    {{
+//        {validations}
+//    }}
+//}}";
+//        Checks.Add(classSymbol.Name, @class);
+//    }
+//}
