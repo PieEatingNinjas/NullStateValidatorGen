@@ -56,11 +56,18 @@ namespace GeneratorTests
                 Id = 6
             };
 
+            var validator = new NullStateValidatorFactory().GetFor<PersonDto>();
 
-            validPerson.Validate();
+            Assert.NotNull(validator);
 
-            var ex = Assert.Throws<NullStateViolationException>(() => invalidPerson.Validate());
+
+            validator!.Validate(validPerson);
+
+            
+
+            var ex = Assert.Throws<NullStateViolationException>(() => validator!.Validate(invalidPerson));
             Assert.Equal($"Member '{nameof(PersonDto.FirstName)}' should not be null!", ex.Message);
+            Assert.Equal(nameof(PersonDto.FirstName), ex.Member);
         }
     }
 }
