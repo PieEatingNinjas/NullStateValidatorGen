@@ -1,9 +1,8 @@
 ﻿using System;
 
-namespace NullStateValidator
+namespace NullStateValidator;
+
+[AttributeUsage(AttributeTargets.Class)]
+public class NullStateValidatorFactoryAttribute : Attribute
 {
-    [AttributeUsage(AttributeTargets.Class)]
-    public class NullStateValidatorFactoryAttribute : Attribute
-    {
-    }
 }

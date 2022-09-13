@@ -57,7 +57,7 @@ public class NSVGenerator : ISourceGenerator
 #if DEBUG
         if (!Debugger.IsAttached)
         {
-            Debugger.Launch();
+          //  Debugger.Launch();
         }
 #endif
         context.RegisterForSyntaxNotifications(() => new NullStateValidatorReceiver());

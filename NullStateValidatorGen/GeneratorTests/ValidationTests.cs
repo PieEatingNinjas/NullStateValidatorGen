@@ -32,6 +32,7 @@ namespace GeneratorTests
 
             var ex = Assert.Throws<NullStateViolationException>(() => validator!.Validate(invalidPerson));
             Assert.Equal($"Member '{nameof(PersonDto.FirstName)}' should not be null!", ex.Message);
+            Assert.Equal(nameof(PersonDto.FirstName), ex.Member);
         }
     }
 }

@@ -1,12 +1,10 @@
 ﻿using System;
 
-namespace NullStateValidator
-{
-    public class NullStateViolationException : Exception
-    {
-        public NullStateViolationException(string property) : base($"Member '{property}' should not be null!")
-        {
+namespace NullStateValidator;
 
-        }
-    }
+public class NullStateViolationException : Exception
+{
+    public string Member { get; }
+    public NullStateViolationException(string member) : base($"Member '{member}' should not be null!")
+    => Member = member;
 }

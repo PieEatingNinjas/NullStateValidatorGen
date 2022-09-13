@@ -1,7 +1,6 @@
-﻿namespace NullStateValidator
+﻿namespace NullStateValidator;
+
+public interface INullStateValidatorFactory
 {
-    public interface INullStateValidatorFactory
-    {
-        public INullStateValidator<T>? GetFor<T>();
-    }
+    public INullStateValidator<T>? GetFor<T>();
 }
