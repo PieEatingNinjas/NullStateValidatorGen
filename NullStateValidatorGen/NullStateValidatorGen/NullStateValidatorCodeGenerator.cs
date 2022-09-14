@@ -60,7 +60,7 @@ namespace NullStateValidatorGen
             factory.WriteLine("private void InitValidators()");
             factory.WriteLine("{");
             factory.Indent++;
-            factory.WriteLine($"{string.Join(";", validatorRegistrations)}");
+            validatorRegistrations.ToList().ForEach(r => factory.WriteLine(r));
             factory.Indent--;
             factory.WriteLine("}");
 
@@ -75,13 +75,6 @@ namespace NullStateValidatorGen
 
         private static (string filename, string code) GenerateValidatorCode(NullStateClassCheckData item)
         {
-            var validations = new StringBuilder();
-
-            foreach (var member in item.Members)
-            {
-                validations.AppendLine($"if(instance.{member} is null) throw new NullStateViolationException(\"{member}\");");
-            }
-
             using var writer = new StringWriter();
             using var validator = new IndentedTextWriter(writer, "\t");
 
@@ -103,7 +96,15 @@ namespace NullStateValidatorGen
             validator.WriteLine($"public void Validate({item.ClassName} instance)");
             validator.WriteLine("{");
             validator.Indent++;
-            validator.WriteLine($"{validations}");
+
+            foreach (var member in item.Members)
+            {
+                validator.WriteLine($"if(instance.{member} is null)");
+                validator.Indent++;
+                validator.WriteLine($"throw new NullStateViolationException(\"{member}\");\n");
+                validator.Indent--;
+            }
+
             validator.Indent--;
             validator.WriteLine("}");
 
