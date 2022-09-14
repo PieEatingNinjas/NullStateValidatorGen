@@ -1,8 +1,9 @@
-﻿namespace NullStateValidator
+﻿using NullStateValidator;
+
+namespace GeneratorTests;
+
+[NullStateValidatorFactory]
+public partial class MyNullStateValidatorFactory
+    : NullStateValidatorFactoryBase
 {
-    [NullStateValidatorFactory]
-    public partial class NullStateValidatorFactory 
-        : NullStateValidatorFactoryBase
-    {
-    }
 }

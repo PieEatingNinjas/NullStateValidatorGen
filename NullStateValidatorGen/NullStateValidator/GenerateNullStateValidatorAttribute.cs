@@ -3,6 +3,6 @@
 namespace NullStateValidator;
 
 [AttributeUsage(AttributeTargets.Class)]
-public class NullStateValidatorAttribute : Attribute
+public class GenerateNullStateValidatorAttribute : Attribute
 {
 }

@@ -1,8 +1,5 @@
 ﻿using Microsoft.CodeAnalysis;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Xml.Linq;
 
 namespace NullStateValidatorGen;
 
@@ -13,43 +10,17 @@ public class NSVGenerator : ISourceGenerator
     {
         if (context.SyntaxContextReceiver is NullStateValidatorReceiver nullStateSyntaxReceiver)
         {
-            if (nullStateSyntaxReceiver != null && nullStateSyntaxReceiver.ClassNullChecks.Any())
+            if (nullStateSyntaxReceiver != null && nullStateSyntaxReceiver.Data is not null)
             {
-                var factoryBuilder = new StringBuilder();
+                var code = NullStateValidatorCodeGenerator.GenerateCode(nullStateSyntaxReceiver.Data);
 
-                foreach (var item in nullStateSyntaxReceiver.ClassNullChecks)
+                foreach (var item in code)
                 {
-                    var code = NullStateValidatorCodeGenerator.GenerateCode(item);
-
-                    context.AddSource(code.filename, code.code);
-
-                    factoryBuilder.AppendLine($"NullStateValidators.Add(\"{item.ClassName}\", new {item.ClassName}NullStateValidator());");
+                    context.AddSource(
+                           $"{item.filename}", item.code);
                 }
-
-                var factory =
-@$"
-            using NullStateValidatorGen;
-    using NullStateValidator;  
-            using GeneratorTests;
-            namespace {nullStateSyntaxReceiver.FactoryNamespace};
-            public partial class {nullStateSyntaxReceiver.FactoryName} : NullStateValidatorFactoryBase
-            {{
-                public NullStateValidatorFactory()
-                {{
-                    InitValidators();
-                }}
-                
-                private void InitValidators()
-                {{
-                    {factoryBuilder}
-                }}
-            }}
-            ";
-                context.AddSource(
-                       $"{nullStateSyntaxReceiver.FactoryName}.g.cs", factory);
             }
         }
-        
     }
 
     public void Initialize(GeneratorInitializationContext context)
@@ -57,7 +28,7 @@ public class NSVGenerator : ISourceGenerator
 #if DEBUG
         if (!Debugger.IsAttached)
         {
-          //  Debugger.Launch();
+            //Debugger.Launch();
         }
 #endif
         context.RegisterForSyntaxNotifications(() => new NullStateValidatorReceiver());
