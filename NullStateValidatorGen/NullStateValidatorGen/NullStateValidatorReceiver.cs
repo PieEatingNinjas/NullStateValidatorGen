@@ -55,12 +55,7 @@ internal class NullStateValidatorReceiver : ISyntaxContextReceiver
                                 if (ps.Type.IsValueType)
                                     continue;
 
-                                if (ps.NullableAnnotation == NullableAnnotation.Annotated)
-                                {
-                                    //Nullable
-                                    Debug.WriteLine($"{ps.ToDisplayString()} is nullable");
-                                }
-                                else if (ps.NullableAnnotation == NullableAnnotation.NotAnnotated)
+                                if (ps.NullableAnnotation == NullableAnnotation.NotAnnotated)
                                 {
                                     //Not nullable
                                     Debug.WriteLine($"{ps.ToDisplayString()} is NOT nullable");
